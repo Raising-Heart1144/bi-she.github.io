@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>二维码工具</title>
+    <!-- PWA 应用清单 -->
+<link rel="manifest" href="./manifest.json">
+<!-- 安卓/ios 图标和主题色 -->
+<link rel="apple-touch-icon" href="./icon-192x192.png">
+<meta name="apple-mobile-web-app-title" content="二维码工具">
+<meta name="theme-color" content="#007aff">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+        body{background:#f5f7fa;padding:16px;min-height:100vh}
+        .title{text-align:center;font-size:22px;margin:16px 0;color:#2d3748}
+        .tab{display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid #e2e8f0}
+        .tab-item{padding:10px 14px;cursor:pointer;font-size:15px}
+        .tab-item.active{color:#007aff;border-bottom:2px solid #007aff}
+        .input-box{margin-bottom:16px}
+        input,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:16px;margin-bottom:8px}
+        textarea{height:120px}
+        .upload{border:2px dashed #ccc;padding:20px;text-align:center;border-radius:12px;margin:16px 0}
+        .btn{background:#007aff;color:#fff;padding:14px;text-align:center;border-radius:12px;margin:16px 0;font-size:16px;font-weight:bold}
+        .qrcode{margin:20px auto;width:280px;height:280px}
+        .logo-preview{max-width:100px;margin:10px auto;display:none}
+        .result{text-align:center;margin-top:20px}
+        .hidden{display:none}
+    </style>
+</head>
+<body>
+    <div class="title">二维码工具（带Logo）</div>
+
+    <div class="tab">
+        <div class="tab-item active" data-mode="url">网址</div>
+        <div class="tab-item" data-mode="text">文字</div>
+    </div>
+
+    <div class="input-box">
+        <input id="input" placeholder="请输入内容" type="text">
+    </div>
+
+    <div class="upload" onclick="document.getElementById('logo').click()">
+        点击上传Logo（可选）
+        <input type="file" id="logo" accept="image/*" hidden>
+        <img class="logo-preview" id="logoImg">
+    </div>
+
+    <div class="btn" onclick="makeQrcode()">生成二维码</div>
+    <div class="btn" onclick="downloadQrcode()" style="background:#10b981">下载二维码</div>
+
+    <div id="qrcode" class="qrcode"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+        let mode = "url";
+        let logoUrl = null;
+        let qrCanvas = null;
+
+        document.querySelectorAll(".tab-item").forEach(t => {
+            t.onclick = () => {
+                document.querySelectorAll(".tab-item").forEach(i=>i.classList.remove("active"));
+                t.classList.add("active");
+                mode = t.dataset.mode;
+            }
+        })
+
+        document.getElementById("logo").onchange = e => {
+            const f = e.target.files[0];
+            if(!f) return;
+            const reader = new FileReader();
+            reader.onload = ev=>{
+                logoUrl = ev.target.result;
+                document.getElementById("logoImg").src = logoUrl;
+                document.getElementById("logoImg").style.display = "block";
+            }
+            reader.readAsDataURL(f);
+        }
+
+        async function makeQrcode() {
+            const val = document.getElementById("input").value.trim();
+            if(!val) return alert("请输入内容");
+            const container = document.getElementById("qrcode");
+            container.innerHTML = "";
+
+            qrCanvas = await QRCode.toCanvas(container, val, {
+                width:280, margin:1, color:{dark:"#000000",light:"#ffffff"}
+            });
+
+            if(logoUrl){
+                const ctx = qrCanvas.getContext("2");
+                const img = new Image();
+                img.onload = ()=>{
+                    const size = 70;
+                    const x = (280-size)/2;
+                    ctx.drawImage(img,x,x,size,size);
+                }
+                img.src = logoUrl;
+            }
+        }
+
+        function downloadQrcode(){
+            if(!qrCanvas) return alert("先生成二维码");
+            const a = document.createElement("a");
+            a.download = "二维码.png";
+            a.href = qrCanvas.toDataURL("image/png");
+            a.click();
+        }
+       
+  // 注册Service Worker（PWA离线支持）
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then((reg) => console.log('SW注册成功:', reg.scope))
+        .catch((err) => console.log('SW注册失败:', err));
+    });
+  }
+    </script>
+</body>
+</html>

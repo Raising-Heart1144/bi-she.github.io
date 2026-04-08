@@ -1,0 +1,20 @@
+{
+  "name": "二维码工具",
+  "short_name": "二维码",
+  "start_url": "./qrcode.html",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#007aff",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
